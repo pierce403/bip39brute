@@ -1,52 +1,53 @@
 from mnemonic import Mnemonic
 import bip32utils
 import requests
+import sys
+import random
 
 mnemo = Mnemonic("english")
 
-# example trying to crack 
-# https://www.reddit.com/r/whatisthisthing/comments/i63122/a_metal_plate_with_random_words_engraved_found/
-# using the "opposite words" method.
-# since some bip39 words aren't real, but their opposites seem to be
-
 target=[
-['differ'], # word on plate is "like"  ???
-['despair', 'abandon'], # word on plate is "love"  ???
-['peasant'], # word is "king"
-['remove'], # word is "place"
-['desk','room'], # word on plate is "closet"    ???
-['attract'], # word on plate is "repel"
-['apple'], # word on plate is "pear"
-['mouse'], # word on plate is "lizard" ???
-['slow'], # word on plate is "fast"
-['person','snake'], # word on plate is "angel"  ??
-['found'], # word on plate is "lost"
-['circle'], # oppisite of "line"
-['please'], # word on plate is "hurt"
-['rude'], # word on plate is "culture"  ??
-['rare'], # word on plate is "trope"
-['total'], # word on plate is "section"
-['false'], # word on plate is "true"
-['follow'], # word on plate is "lead"
-['admit'], # word on plate is "suggest"  ?????
-['win'], # word on plate is "loose", maybe misspelling of lose?
-['cheese'], # word on the plate is "wine"
-['breeze','lazy'], # word on plate is "laber"  ????????????
-['local'], # word on plate is "global"
-['myth']  # word on plate is covered up
+['xxxx'], # word on plate is "like"  ???
+['muscle'], # word on plate is "love"  ???
+['xxxx'], # word is "king"
+['shaft'], # word is "place"
+['task'], # word on plate is "closet"    ???
+['xxxx'], # word on plate is "repel"
+['nut'], # word on plate is "pear"
+['xxxx'], # word on plate is "lizard" ???
+['fault'],  # word on plate is covered up
+['list'], # word on plate is "fast"
+['xxxx'], # word on plate is "fast"
+['excess'], # word on plate is "fast"
 ]
 
 allwords=[]
 for line in open('bip39.txt'):
   allwords.append(line.strip()) 
 
-#target[13]=allwords
-#target[19]=allwords
-target[23]=allwords # use every possible bip39 word for this slot
+target[0]=allwords
+target[2]=allwords
+target[5]=list(filter(re.compile('^p').match, allwords))
+target[7]=list(filter(re.compile('^[pygjq].{4,}').match, allwords))
+target[10]=list(filter(re.compile('^[fhiklmnrvwx]').match, allwords))
 
-for x in range(0,5000000000): # know your limits
+keyspace = 1
+print(len(target))
+for i in range(0,len(target)):
+  keyspace *= len(target[i]) 
+
+print("keyspace size is "+str(keyspace))
+
+starting = random.randint(0,keyspace)
+#starting = 0 # for when you're all alone
+
+for x in range(starting,keyspace): # know your limits
   mystring=""
   eol=0
+
+  if x%1000 == 0:
+    sys.stderr.write(str('{:f}'.format(x/keyspace*100))+"% complete\n")
+    sys.stderr.flush()
   
   remaining=x
   for word in range(0,len(target)):
@@ -64,7 +65,7 @@ for x in range(0,5000000000): # know your limits
   try:
     win = mnemo.check(mystring.strip())
     if win:
-      #print(mystring) # print the winnings
+      print(mystring) # print the winnings
       seed = mnemo.to_seed(mystring.strip(),"")
       bip32_root_key_obj = bip32utils.BIP32Key.fromEntropy(seed)
 
@@ -79,10 +80,9 @@ for x in range(0,5000000000): # know your limits
       print(privkey)
 
       # see if this address has ever recieved coins
-      print(requests.get('https://blockchain.info/q/getreceivedbyaddress/'+address).text)
+      #print(requests.get('https://blockchain.info/q/getreceivedbyaddress/'+address).text)
   except Exception as e:
     print("nope "+str(e))
 
   if(eol==len(target)): # if we've reached the end of every line, we're done
     break
-
