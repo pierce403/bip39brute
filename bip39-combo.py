@@ -3,6 +3,7 @@ import bip32utils
 import requests
 import sys
 import random
+import re
 
 mnemo = Mnemonic("english")
 
@@ -36,7 +37,7 @@ print(len(target))
 for i in range(0,len(target)):
   keyspace *= len(target[i]) 
 
-print("keyspace size is "+str(keyspace))
+print ("keyspace size is %i (%i bits)" % (keyspace, len(bin(keyspace))-2))
 
 starting = random.randint(0,keyspace)
 #starting = 0 # for when you're all alone
@@ -45,8 +46,10 @@ for x in range(starting,keyspace): # know your limits
   mystring=""
   eol=0
 
-  if x%1000 == 0:
-    sys.stderr.write(str('{:f}'.format(x/keyspace*100))+"% complete\n")
+  if x%10000 == 0:
+    sys.stderr.write(str('{:3.10f}'.format(x/keyspace*100))+"% complete\n")
+    #sys.stderr.write("keyspace size is %i (%i bits)\n" % (keyspace, len(bin(keyspace))-2))
+
     sys.stderr.flush()
   
   remaining=x
